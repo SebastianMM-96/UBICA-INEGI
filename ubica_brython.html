@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+
+    <title>Ubica - Busqueda de establecimientos</title>
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+      
+    <!-- Favicons -->
+    <link href="assets/img/favicon.png" rel="icon">
+    <link href="aseets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+	<style>
+        .tarjeta {
+            margin: 3rem 12rem;
+            border: #ccc 1px solid;
+            padding: 20px;
+            font-family: 'IBM Plex Sans', serif;
+        }
+        img {
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+    </style>
+    
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.slim.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Brython files -->
+    <script src="brython.js"></script>
+    <script src="brython_stdlib.js"></script>
+    
+  </head>
+  
+    <body onload="brython()">
+    
+    <!-- Load a simple script to see if brython is enabled-->
+    <script type="text/python">
+        from browser import *
+        alert("Brython is ready!")
+    </script>
+
+    <!-- Navegación de la página -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">Ubica</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="index.html">Ir a Inicio
+                <span class="sr-only">(current)</span>
+              </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="ubica_ejercicio.html">Versión JS
+                </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Contenido de la página -->
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 text-center">
+          <h1 class="mt-5">Busqueda de establecimientos en México usando datos del INEGI</h1>
+          <h2 class="mt-10">Powered by:</h2>
+        </div>
+      </div>
+    </div>
+
+    <img src="assets/img/brython.png" alt="Brython" style="width:10%;">
+
+    <br><br>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 text-center">
+            <i class="fa fa-thumb-tack" aria-hidden="true"></i> <label for="condi">Condición: </label><input class="ingreso" type="text" id="condi" aria-label="Condición"
+            value="restaurantes" tabindex="515" />
+            <br><br>
+            <i class="fa fa-compass"></i> <label for="lat">Latitud: </label><input class="ingreso" type="text" id="lat" aria-label="Latitud"
+            value="21.85717833" tabindex="516" />
+            <i class="fa fa-compass"></i> <label for="lon">Longitud: </label><input class="ingreso" type="text" id="lon" aria-label="Longitud"
+            value="-102.28487238" tabindex="517" />
+            <br><br>
+            <i class="fa fa-arrows"></i> <label for="mts">Metros: </label><input class="ingreso" type="text" id="mts" aria-label="Metros"
+            value="200" tabindex="518" />
+            <br><br>
+            <input type="button" class="btn btn-success"
+             id="boton-ajax" onclick="saveValues();" value="Obtener datos del INEGI">
+            <button type="button" id="reload_page" class="btn btn-warning">Volver a buscar!</button>
+            <button type="button" onclick="loadValues();" class="btn btn-info">
+                <i class="fa fa-history" aria-hidden="true"></i>
+                Historial de busqueda</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="caja" class="tarjeta" style="text-align: center;">
+        <p>Busca un establecimiento en México con datos del INEGI</p>
+    </div>
+
+    <!-- ====== Reload page ====== -->
+    <script type="text/javascript">
+      $(document).ready(function() {
+        // RELOAD PAGE ON BUTTON CLICK EVENT.
+          $('#reload_page').click(function () {
+              location.reload(true); 
+          });
+      });
+    </script>
+
+    <!-- ==== LocalStorage ==== -->  
+    <script type="text/javascript">
+      function saveValues(){
+        localStorage._condicion = document.getElementById("condi").value;
+        /*Limpiando los campos o inputs*/
+        document.getElementById("condi").value = "";
+      }
+  
+      function loadValues(){
+        var Text;
+        Text = document.getElementById("condi").value = localStorage._condicion
+        alert("Tu historial es: " + Text);
+      }
+    </script> 
+
+    <!-- Brython implementation -->
+    <script type="text/python">
+        #---------------------------------------|
+        # Desarrollado por: Sebastián Marroquín |
+        #---------------------------------------|
+        
+        from browser import document, ajax, html
+            
+        token = "adf48de4-366a-40e4-a483-9cf62bf1a3c1"
+            
+        def al_completar(req):
+            import json
+            datos = json.loads(req.responseText)
+            document['caja'].clear()
+            ordenar(datos)
+            
+        def solicitar_api(e):
+            obtenerDatos_Campos()
+            url = f"https://www.inegi.org.mx/app/api/denue/v1/consulta/buscar/{condicion}/{latitud},{longitud}/{metros}/{token}"
+            document['caja'].text = 'Cargando...'
+            req = ajax.ajax()
+            req.open('GET', url, False)
+            req.bind('complete', al_completar)
+            req.send()
+                      
+        def obtenerDatos_Campos():
+            global condicion, latitud, longitud, metros
+            condicion = document['condi'].value
+            latitud = document['lat'].value
+            longitud = document['lon'].value
+            metros = document['mts'].value
+                    
+        def ordenar(lista):
+            cant_locales = len(lista)
+            lista = list(lista)
+            print(type(lista))
+            print(cant_locales)
+            locales = [' '.join([local['Nombre'], local['Clase_actividad'], local['Telefono']]) for local in lista]
+            document['caja'] <= html.P(f"Hay {cant_locales} locales a {metros} metros de esta ubicación ({latitud}, {longitud})\
+                    Que se encuentra en {lista[0]['Ubicacion']}") + html.BR()
+            for local in locales:
+                document['caja'] <= html.P(local) + html.BR()
+            
+        condicion = ''
+        metros = ''
+        longitud = ''
+        latitud = ''
+        document['boton-ajax'].bind('click', solicitar_api)
+    </script>
+  </body>
+</html>
